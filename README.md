@@ -1,1 +1,15 @@
-# aryanbrite-openrabbit
+# aryanbrite/openrabbit
+
+GitHub Action that generates PR review summaries and inline comments using any LLM provider.
+
+Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/aryanbrite/openrabbit](https://github.com/aryanbrite/openrabbit).
+
+## Versions
+
+| Version | Tag | Upstream commit |
+|---------|-----|-----------------|
+| v0.7.1 | [`v0.7.1`](https://github.com/chainguard-actions/aryanbrite-openrabbit/tree/v0.7.1) | [`59292e8`](https://github.com/aryanbrite/openrabbit/commit/59292e8c17077ca8aadfdf0a93c57d27260bd4cf) |
+
+## Privacy
+
+This Action contacts Chainguard's licensing server to verify authorization. Connection metadata (IP address, GitHub repository identifier, timestamp, and any metadata encoded in the auth token) is transmitted to Chainguard, Inc. even if authorization is denied in accordance with our [Privacy Notice](https://www.chainguard.dev/legal/privacy-notice)
