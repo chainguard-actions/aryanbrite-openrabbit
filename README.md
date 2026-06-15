@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v0.7.1 | [`v0.7.1`](https://github.com/chainguard-actions/aryanbrite-openrabbit/tree/v0.7.1) | [`59292e8`](https://github.com/aryanbrite/openrabbit/commit/59292e8c17077ca8aadfdf0a93c57d27260bd4cf) |
+| v0.7.3 | [`v0.7.3`](https://github.com/chainguard-actions/aryanbrite-openrabbit/tree/v0.7.3) | [`144fa35`](https://github.com/aryanbrite/openrabbit/commit/144fa3516904e26f3de1c03d46c49fd82fc43bbf) |
 
 ## Privacy
 
