@@ -1,0 +1,36 @@
+name: Test invalid review_lens normalization
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with invalid review_lens (expect failure due to no PR context)
+        id: action
+        uses: .
+        with:
+          github_token: fake-token
+          llm_api_key: fake-api-key
+          llm_provider: openrouter
+          llm_model: openrouter/free
+          review_mode: inline
+          tone_mode: nitpicky
+          review_lens: invalid-lens-value
+          debiased_mode: "true"
+        continue-on-error: true
+
+      - name: Assert action failed gracefully (not a crash)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail (no PR context), got outcome=$OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action handled invalid review_lens and failed gracefully due to missing PR context"

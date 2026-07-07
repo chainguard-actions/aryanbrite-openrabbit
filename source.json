@@ -1,6 +1,11 @@
 {
   "owner": "aryanbrite",
   "repo": "openrabbit",
-  "version": "",
-  "url": "https://github.com/aryanbrite/openrabbit"
+  "version": "v0.7.8",
+  "commit_sha": "9f5e61ef78e1589420bd0b8230172a17bd2aa5d5",
+  "url": "https://github.com/aryanbrite/openrabbit",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "1",
+  "harden_agent_version": "1"
 }
