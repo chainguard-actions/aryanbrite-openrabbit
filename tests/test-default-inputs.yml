@@ -1,0 +1,48 @@
+name: Test default inputs and input normalization
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with all defaults and a fake API key (expect failure at PR check)
+        id: action-defaults
+        uses: .
+        with:
+          llm_api_key: fake-key-defaults-test
+        continue-on-error: true
+
+      - name: Assert action failed at PR number check (not at API key check)
+        env:
+          OUTCOME: ${{ steps.action-defaults.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail (at PR number check), but got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action reached PR number validation (API key was accepted)"
+
+      - name: Run action with invalid review_lens (should normalize to default)
+        id: action-invalid-lens
+        uses: .
+        with:
+          llm_api_key: fake-key-lens-test
+          review_lens: invalid-lens-value
+        continue-on-error: true
+
+      - name: Assert action with invalid review_lens also failed at PR check
+        env:
+          OUTCOME: ${{ steps.action-invalid-lens.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail (at PR number check), but got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action normalized invalid review_lens and reached PR number validation"

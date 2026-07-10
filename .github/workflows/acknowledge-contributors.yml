@@ -1,0 +1,64 @@
+name: Acknowledge Contributors
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write  # Allows git push
+
+jobs:
+  acknowledge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+
+      - name: Extract usernames from issue body
+        id: extract
+        run: |
+          # Extract all usernames in <username> format
+          USERNAMES=$(jq -r '.issue.body' "$GITHUB_EVENT_PATH" | grep -oP '(?<=<)[a-zA-Z0-9_-]+(?=>)')
+          if [ -z "$USERNAMES" ]; then
+            echo "No usernames found."
+            exit 0
+          fi
+
+          # Sanitize and write to GITHUB_OUTPUT using heredoc with newline stripping
+          safe=$(printf '%s' "$USERNAMES" | tr -d '\n\r')
+          echo "usernames<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$safe" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Commit acknowledgment for each contributor
+        env:
+          USERNAMES: ${{ steps.extract.outputs.usernames }}
+        run: |
+          touch ACKNOWLEDGMENTS.md
+
+          while IFS= read -r USERNAME; do
+            [ -z "$USERNAME" ] && continue
+            # Fetch contributor info from GitHub API
+            NAME=$(curl -s "https://api.github.com/users/$USERNAME" | jq -r .name)
+            if [ "$NAME" == "null" ] || [ -z "$NAME" ]; then
+              NAME=$USERNAME
+            fi
+            EMAIL="$USERNAME@users.noreply.github.com"
+
+            # Avoid duplicate entries
+            if ! grep -q "<$USERNAME>" ACKNOWLEDGMENTS.md; then
+              echo "- Thanks <$USERNAME> for contributing!" >> ACKNOWLEDGMENTS.md
+              git add ACKNOWLEDGMENTS.md
+              git commit -m "Acknowledge <$USERNAME> contribution (via GitHub Action)" --author="$NAME <$EMAIL>"
+            else
+              echo "<$USERNAME> already acknowledged."
+            fi
+          done <<< "$USERNAMES"
+
+          git push
