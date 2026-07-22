@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
 
       - name: Set up Git
         run: |
@@ -30,30 +30,21 @@ jobs:
             exit 0
           fi
 
-          # Sanitize: strip newlines before writing to GITHUB_OUTPUT
+          # Sanitize and write to GITHUB_OUTPUT (strip newlines to prevent injection)
           safe=$(printf '%s' "$USERNAMES" | tr -d '\n\r')
           echo "usernames=$safe" >> "$GITHUB_OUTPUT"
 
       - name: Commit acknowledgment for each contributor
         env:
-          EXTRACTED_USERNAMES: ${{ steps.extract.outputs.usernames }}
+          USERNAMES: ${{ steps.extract.outputs.usernames }}
         run: |
-          USERNAMES="$EXTRACTED_USERNAMES"
           touch ACKNOWLEDGMENTS.md
 
           while IFS= read -r USERNAME; do
-            # Skip empty lines
-            [ -z "$USERNAME" ] && continue
-            # Validate: only allow safe GitHub username characters
-            if ! printf '%s' "$USERNAME" | grep -qE '^[a-zA-Z0-9_-]+$'; then
-              echo "Skipping invalid username: $USERNAME"
-              continue
-            fi
-
             # Fetch contributor info from GitHub API
             NAME=$(curl -s "https://api.github.com/users/$USERNAME" | jq -r .name)
             if [ "$NAME" == "null" ] || [ -z "$NAME" ]; then
-              NAME="$USERNAME"
+              NAME=$USERNAME
             fi
             EMAIL="$USERNAME@users.noreply.github.com"
 
