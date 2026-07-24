@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
 
       - name: Set up Git
         run: |
@@ -30,11 +30,9 @@ jobs:
             exit 0
           fi
 
-          # Sanitize and write to GITHUB_OUTPUT using heredoc with newline stripping
+          # Sanitize: strip newlines before writing to GITHUB_OUTPUT
           safe=$(printf '%s' "$USERNAMES" | tr -d '\n\r')
-          echo "usernames<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$safe" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "usernames=$safe" >> "$GITHUB_OUTPUT"
 
       - name: Commit acknowledgment for each contributor
         env:
@@ -42,10 +40,10 @@ jobs:
         run: |
           touch ACKNOWLEDGMENTS.md
 
-          while IFS= read -r USERNAME; do
-            [ -z "$USERNAME" ] && continue
+          read -ra USERNAME_ARRAY <<< "$USERNAMES"
+          for USERNAME in "${USERNAME_ARRAY[@]}"; do
             # Fetch contributor info from GitHub API
-            NAME=$(curl -s "https://api.github.com/users/$USERNAME" | jq -r .name)
+            NAME=$(curl -s "https://api.github.com/users/${USERNAME}" | jq -r .name)
             if [ "$NAME" == "null" ] || [ -z "$NAME" ]; then
               NAME=$USERNAME
             fi
@@ -59,6 +57,6 @@ jobs:
             else
               echo "<$USERNAME> already acknowledged."
             fi
-          done <<< "$USERNAMES"
+          done
 
           git push

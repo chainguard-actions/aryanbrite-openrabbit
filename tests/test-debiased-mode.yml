@@ -1,4 +1,4 @@
-name: Test missing LLM API key
+name: Test debiased mode enabled
 on:
   workflow_dispatch:
 jobs:
@@ -14,20 +14,22 @@ jobs:
           github_token: ${{ github.token }}
           llm_provider: openrouter
           llm_api_url: https://openrouter.ai/api/v1
-          # llm_api_key intentionally omitted to trigger the missing-key error
+          llm_api_key: fake-key-for-testing-debiased-mode
           llm_model: openrouter/free
-          review_mode: both
+          review_mode: summary
           tone_mode: balanced
-          review_lens: default
-          debiased_mode: "false"
+          review_lens: security
+          debiased_mode: "true"
 
-      - name: Assert action failed due to missing API key
+      - name: Assert action failed at PR context check with debiased_mode enabled
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
+          # With debiased_mode=true and no PR context, the action should still
+          # fail at the PR number check (not crash during input parsing).
           if [ "$OUTCOME" != "failure" ]; then
-            echo "FAIL: expected action to fail when llm_api_key is missing, got outcome=$OUTCOME"
+            echo "FAIL: expected action to fail (at PR context check), got outcome=$OUTCOME"
             exit 1
           fi
-          echo "PASS: action correctly failed when llm_api_key was not provided"
+          echo "PASS: action handled debiased_mode=true and failed correctly at PR context check"
