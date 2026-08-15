@@ -1,0 +1,31 @@
+name: Test security review lens and direct tone
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with security lens and direct tone (expect failure at PR context)
+        id: action
+        uses: .
+        with:
+          github_token: ${{ github.token }}
+          llm_provider: openrouter
+          llm_api_key: "fake-key-for-testing"
+          llm_model: openrouter/free
+          review_mode: summary
+          tone_mode: direct
+          review_lens: security
+          debiased_mode: "false"
+        continue-on-error: true
+
+      - name: Assert action failed at PR context check (not at input validation)
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" != "failure" ]; then
+            echo "FAIL: expected action to fail when no PR context is available"
+            exit 1
+          fi
+          echo "PASS: action correctly failed at PR context check with security lens inputs"

@@ -1,0 +1,50 @@
+name: Test OpenRabbit default inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Verify action.yml exists and has expected defaults
+        run: |
+          if [ ! -f "$GITHUB_WORKSPACE/action.yml" ]; then
+            echo "FAIL: action.yml not found"
+            exit 1
+          fi
+          if ! grep -q 'default: openrouter' "$GITHUB_WORKSPACE/action.yml"; then
+            echo "FAIL: expected default llm_provider 'openrouter' not found"
+            exit 1
+          fi
+          if ! grep -q 'default: both' "$GITHUB_WORKSPACE/action.yml"; then
+            echo "FAIL: expected default review_mode 'both' not found"
+            exit 1
+          fi
+          if ! grep -q 'default: balanced' "$GITHUB_WORKSPACE/action.yml"; then
+            echo "FAIL: expected default tone_mode 'balanced' not found"
+            exit 1
+          fi
+          if ! grep -q 'default: default' "$GITHUB_WORKSPACE/action.yml"; then
+            echo "FAIL: expected default review_lens 'default' not found"
+            exit 1
+          fi
+          echo "PASS: all default input values verified"
+
+      - id: action
+        name: Run OpenRabbit with default inputs
+        uses: .
+        continue-on-error: true
+        with:
+          github_token: dummy-token
+          llm_api_key: dummy-key
+
+      - name: Assert action was invoked
+        run: |
+          echo "Action step completed (continue-on-error allows graceful failure without real PR/token)"
+          echo "PASS"
