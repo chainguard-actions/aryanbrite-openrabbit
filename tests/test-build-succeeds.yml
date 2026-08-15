@@ -1,0 +1,42 @@
+name: Test action build succeeds
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github_token: fake-token
+          llm_api_key: fake-api-key
+          llm_model: openrouter/free
+          review_mode: both
+          tone_mode: balanced
+          review_lens: default
+          debiased_mode: "false"
+      - name: Assert dist/action.js was created by the build step
+        run: |
+          # Under act, github.action_path is the workspace root (since uses: . points there)
+          # The build step runs tsc in github.action_path, producing dist/action.js there
+          DIST_FILE_ROOT="${GITHUB_WORKSPACE}/dist/action.js"
+          DIST_FILE_SUBDIR="${GITHUB_WORKSPACE}/pristine/aryanbrite--openrabbit/v0.7.1/dist/action.js"
+          echo "Checking for dist/action.js at workspace root: $DIST_FILE_ROOT"
+          echo "Checking for dist/action.js at action subdir: $DIST_FILE_SUBDIR"
+          if [ -f "$DIST_FILE_ROOT" ]; then
+            echo "PASS: dist/action.js exists at workspace root — build phase completed successfully"
+          elif [ -f "$DIST_FILE_SUBDIR" ]; then
+            echo "PASS: dist/action.js exists at action subdir — build phase completed successfully"
+          else
+            echo "FAIL: dist/action.js was not found at either expected location"
+            echo "Contents of workspace root:"
+            ls -la "${GITHUB_WORKSPACE}/" || true
+            echo "Contents of dist (if any):"
+            ls -la "${GITHUB_WORKSPACE}/dist/" 2>/dev/null || echo "(no dist dir at workspace root)"
+            exit 1
+          fi
