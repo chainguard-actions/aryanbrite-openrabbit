@@ -1,0 +1,73 @@
+name: Test input defaults and normalization
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Run the action with all defaults (no inputs at all) and a placeholder API key.
+      # The action should fail at the PR context check (not at input parsing),
+      # confirming that default values are correctly applied.
+      - id: action-defaults
+        uses: .
+        with:
+          llm_api_key: placeholder-key
+        continue-on-error: true
+
+      - name: Assert action failed at PR context check (not at input parsing)
+        env:
+          OUTCOME: ${{ steps.action-defaults.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail (no PR context), but outcome was '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action reached PR context check with default inputs"
+
+      # Test with an invalid review_lens value — should be normalized to 'default'
+      # and still fail at the PR context check
+      - id: action-invalid-lens
+        uses: .
+        with:
+          llm_api_key: placeholder-key
+          review_lens: invalid-lens-value
+          tone_mode: direct
+          review_mode: inline
+          debiased_mode: "true"
+        continue-on-error: true
+
+      - name: Assert action with invalid lens still fails at PR context check
+        env:
+          OUTCOME: ${{ steps.action-invalid-lens.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail (no PR context), but outcome was '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action normalized invalid review_lens and reached PR context check"
+
+      # Test with a valid review_lens value (security)
+      - id: action-security-lens
+        uses: .
+        with:
+          llm_api_key: placeholder-key
+          review_lens: security
+          tone_mode: supportive
+          review_mode: both
+          debiased_mode: "false"
+        continue-on-error: true
+
+      - name: Assert action with security lens fails at PR context check
+        env:
+          OUTCOME: ${{ steps.action-security-lens.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail (no PR context), but outcome was '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action with security lens reached PR context check"

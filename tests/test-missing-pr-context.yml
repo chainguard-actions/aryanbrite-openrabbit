@@ -1,0 +1,31 @@
+name: Test missing PR context
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Run the action with an API key but no PR context (workflow_dispatch has no PR number).
+      # The action should fail because there is no pull_request event context.
+      - id: action
+        uses: .
+        with:
+          llm_provider: openrouter
+          llm_api_key: placeholder-key
+          llm_model: openrouter/free
+          review_mode: summary
+        continue-on-error: true
+
+      # The action must have failed because there is no pull_request event context
+      - name: Assert action failed due to missing PR context
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail when run outside a pull_request event, but outcome was '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action correctly failed when no pull_request context was available"

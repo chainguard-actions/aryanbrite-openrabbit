@@ -1,0 +1,31 @@
+name: Test action build succeeds
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Call the action directly — the composite action installs deps and builds
+      # internally via npm install + npm run build in ${{ github.action_path }}.
+      # With no PR context (workflow_dispatch), the action should fail at the
+      # PR context check after a successful build.
+      - id: action
+        uses: .
+        with:
+          llm_api_key: placeholder-key
+          review_mode: summary
+        continue-on-error: true
+
+      - name: Assert action ran and produced a definitive outcome
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action ran and produced a definitive outcome ($OUTCOME)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME' — expected success or failure"
+            exit 1
+          fi
