@@ -17,6 +17,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v0.8.0 | [`v0.8.0`](https://github.com/chainguard-actions/aryanbrite-openrabbit/tree/v0.8.0) | [`7e62181`](https://github.com/aryanbrite/openrabbit/commit/7e62181750a8060a612f42d0629f6cc16e326cd4) |
 | v0.8.3 | [`v0.8.3`](https://github.com/chainguard-actions/aryanbrite-openrabbit/tree/v0.8.3) | [`186b3a1`](https://github.com/aryanbrite/openrabbit/commit/186b3a15fb89c8c2c182ebff73751a035b18bfcf) |
 | v0.8.4 | [`v0.8.4`](https://github.com/chainguard-actions/aryanbrite-openrabbit/tree/v0.8.4) | [`f5b99f5`](https://github.com/aryanbrite/openrabbit/commit/f5b99f51958b6e9568bdf5c71fbf2e74377e3ea1) |
+| v0.8.5 | [`v0.8.5`](https://github.com/chainguard-actions/aryanbrite-openrabbit/tree/v0.8.5) | [`e6732bb`](https://github.com/aryanbrite/openrabbit/commit/e6732bb6c5e900eb355a38a7733cb222cee168c1) |
 
 ## Privacy
 
