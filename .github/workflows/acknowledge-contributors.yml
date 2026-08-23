@@ -1,0 +1,74 @@
+name: Acknowledge Contributors
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write  # Allows git push
+
+jobs:
+  acknowledge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+
+      - name: Set up Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+
+      - name: Extract usernames from issue body
+        id: extract
+        run: |
+          # Extract all usernames in <username> format
+          USERNAMES=$(jq -r '.issue.body' "$GITHUB_EVENT_PATH" | grep -oP '(?<=<)[a-zA-Z0-9_-]+(?=>)')
+          if [ -z "$USERNAMES" ]; then
+            echo "No usernames found."
+            exit 0
+          fi
+
+          # Sanitize newlines before writing to GITHUB_OUTPUT to prevent injection
+          safe_usernames=$(printf '%s' "$USERNAMES" | tr -d '\n\r')
+          echo "usernames=$safe_usernames" >> "$GITHUB_OUTPUT"
+
+      - name: Commit acknowledgment for each contributor
+        env:
+          EXTRACTED_USERNAMES: ${{ steps.extract.outputs.usernames }}
+        run: |
+          touch ACKNOWLEDGMENTS.md
+
+          # Tokenize the space-separated usernames safely
+          usernames_array=()
+          if [ -n "$EXTRACTED_USERNAMES" ]; then
+            while IFS= read -r -d '' t; do usernames_array+=("$t"); done \
+              < <(printf '%s' "$EXTRACTED_USERNAMES" | xargs printf '%s\0')
+          fi
+
+          for USERNAME in "${usernames_array[@]}"; do
+            # Validate username: only allow alphanumeric, hyphens, underscores
+            if ! printf '%s' "$USERNAME" | grep -qE '^[a-zA-Z0-9_-]+$'; then
+              echo "Skipping invalid username: $USERNAME"
+              continue
+            fi
+
+            # Fetch contributor info from GitHub API
+            NAME=$(curl -s "https://api.github.com/users/${USERNAME}" | jq -r .name)
+            if [ "$NAME" == "null" ] || [ -z "$NAME" ]; then
+              NAME="$USERNAME"
+            fi
+            EMAIL="${USERNAME}@users.noreply.github.com"
+
+            # Avoid duplicate entries
+            if ! grep -q "<${USERNAME}>" ACKNOWLEDGMENTS.md; then
+              echo "- Thanks <${USERNAME}> for contributing!" >> ACKNOWLEDGMENTS.md
+              git add ACKNOWLEDGMENTS.md
+              git commit -m "Acknowledge <${USERNAME}> contribution (via GitHub Action)" --author="${NAME} <${EMAIL}>"
+            else
+              echo "<${USERNAME}> already acknowledged."
+            fi
+          done
+
+          git push

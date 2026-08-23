@@ -1,0 +1,104 @@
+name: Auto Semantic Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'  # Skip bot commits to avoid loops
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Locate README file
+        run: |
+          if [ -f README.md ]; then
+            echo "README_FILE=README.md" >> $GITHUB_ENV
+          elif [ -f Readme.md ]; then
+            echo "README_FILE=Readme.md" >> $GITHUB_ENV
+          else
+            echo "README_FILE=README.md" >> $GITHUB_ENV
+            touch README.md
+          fi
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch tags
+        run: git fetch --force --tags origin
+
+      - name: Get latest version from tags
+        id: get_version
+        run: |
+          CURRENT_VERSION=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -n 1)
+          if [ -z "$CURRENT_VERSION" ]; then
+            CURRENT_VERSION="v0.0.0"
+          fi
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Bump version (patch)
+        id: bump
+        env:
+          CURRENT_VERSION: ${{ env.CURRENT_VERSION }}
+        run: |
+          TAG="$CURRENT_VERSION"
+          MAJOR=$(echo "$TAG" | cut -d. -f1 | tr -d 'v')
+          MINOR=$(echo "$TAG" | cut -d. -f2)
+          PATCH=$(echo "$TAG" | cut -d. -f3)
+          PATCH=$((PATCH + 1))
+          if [ "$PATCH" -gt 9 ]; then
+            PATCH=0
+            MINOR=$((MINOR + 1))
+          fi
+          if [ "$MINOR" -gt 9 ]; then
+            MINOR=0
+            MAJOR=$((MAJOR + 1))
+          fi
+          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "New version: $NEW_VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        with:
+          tag_name: ${{ env.NEW_VERSION }}
+          name: Release ${{ env.NEW_VERSION }}
+          body: "Automated semantic release from commit $GITHUB_SHA"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update version badge in README
+        env:
+          NEW_VERSION: ${{ env.NEW_VERSION }}
+          REF_NAME: ${{ github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BADGE_URL="https://img.shields.io/badge/version-${NEW_VERSION}-orange"
+          if grep -q "version-${NEW_VERSION}" "$README_FILE"; then
+            echo "Badge is already up-to-date."
+          else
+            if grep -q "version-" "$README_FILE"; then
+              sed -i "s|!\[version\].*|![version](${BADGE_URL})|" "$README_FILE"
+            else
+              TEMP_FILE=$(mktemp)
+              printf '![version](%s)\n' "$BADGE_URL" > "$TEMP_FILE"
+              cat "$README_FILE" >> "$TEMP_FILE"
+              mv "$TEMP_FILE" "$README_FILE"
+            fi
+            git add "$README_FILE"
+            git commit -m "Update version badge to ${NEW_VERSION}"
+            git push origin "HEAD:refs/heads/${REF_NAME}"
+          fi

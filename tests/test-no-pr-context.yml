@@ -1,0 +1,36 @@
+name: Test - No PR Context
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          llm_provider: openrouter
+          llm_api_url: https://openrouter.ai/api/v1
+          llm_api_key: fake-key-for-testing
+          llm_model: openrouter/free
+          review_mode: both
+          tone_mode: balanced
+          review_lens: default
+          debiased_mode: "false"
+
+      - name: Assert action failed gracefully due to missing PR context
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed as expected (no pull_request context under workflow_dispatch)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: action unexpectedly succeeded without a PR context"
+            exit 1
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
