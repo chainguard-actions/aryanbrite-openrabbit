@@ -10,57 +10,35 @@
 
 **Harden Agent Version:** `2`
 
-Action **aryanbrite--openrabbit/v0.6.9** was hardened automatically. 2 finding(s) were identified and resolved across 2 iteration(s).
+Action **aryanbrite--openrabbit/v0.6.9** was hardened automatically. 1 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### unpinned-uses (severity: high)
 
-Multiple `uses:` references are pinned to mutable tags or branch names instead of full 40-character commit SHAs, making the action vulnerable to supply-chain attacks if the referenced tag or branch is moved or overwritten.
+Two `uses:` references are pinned to mutable tags/branches instead of immutable 40-character commit SHAs, making the action vulnerable to supply-chain attacks:
 
-Failing references:
-- action.yml: `uses: actions/setup-node@v5`
-- .github/workflows/auto-version.yml: `uses: actions/checkout@v5`
-- .github/workflows/auto-version.yml: `uses: softprops/action-gh-release@v3`
-- .github/workflows/pr-review.yml: `uses: aryan6673/openrabbit@main`
-- reviewer.yml: `uses: aryan6673/openrabbit@main`
+1. `action.yml`: `uses: actions/setup-node@v5` — `@v5` is a mutable tag that can be silently redirected to a different commit.
+2. `reviewer.yml`: `uses: aryan6673/openrabbit@main` — `@main` is a mutable branch ref that can be updated at any time by the repository owner.
+
+Both should be pinned to full SHA digests, e.g. `uses: actions/setup-node@<40-hex-char-sha> # v5`.
 
 Locations:
 
-- `action.yml:38`
-- `.github/workflows/auto-version.yml:18`
-- `.github/workflows/auto-version.yml:57`
-- `.github/workflows/pr-review.yml:13`
-- `reviewer.yml:13`
-
-### script-injection (severity: high)
-
-Multiple `run:` blocks in `.github/workflows/auto-version.yml` directly interpolate GitHub Actions expressions (`${{ ... }}`) inside shell command strings, violating sub-rule (a). Before the shell ever sees the string, YAML template substitution injects the value verbatim, allowing an attacker who can influence the value to inject arbitrary shell commands.
-
-1. "Bump version (patch)" step (line ~47): `TAG=${{ env.CURRENT_VERSION }}` — the env context value is interpolated directly into the shell assignment without quoting or sanitization.
-
-2. "Update version badge in README" step (line ~63): `BADGE_URL="https://img.shields.io/badge/version-${{ env.NEW_VERSION }}-orange"`, `if grep -q "version-${{ env.NEW_VERSION }}"`, `git commit -m "Update version badge to ${{ env.NEW_VERSION }}"`, and `git push origin HEAD:${{ github.ref_name }}` — all interpolate expressions directly inside shell commands.
-
-Locations:
-
-- `.github/workflows/auto-version.yml:47`
-- `.github/workflows/auto-version.yml:63`
+- `action.yml:43`
+- `reviewer.yml:14`
 
 ## Iteration Notes
 
 ### Iteration 1
 
-**Fixes applied:** unpinned-uses, script-injection
+**Fixes applied:** unpinned-uses
 
 **Notes:**
 
-Fixed all 5 unpinned `uses:` references by resolving full 40-character commit SHAs via lookup_action_sha: actions/setup-node@v5 (a0853c2), actions/checkout@v5 (93cb6ef), softprops/action-gh-release@v3 (3d0d988), and aryan6673/openrabbit@main (d5f8e12) in pr-review.yml and reviewer.yml. Fixed 2 script injection locations in auto-version.yml: (1) 'Bump version (patch)' step moved ${{ env.CURRENT_VERSION }} into an env: block; (2) 'Update version badge in README' step moved ${{ env.NEW_VERSION }} and ${{ github.ref_name }} into an env: block, referencing them as plain shell variables throughout the run script.
+Pinned two mutable action references to immutable commit SHAs:
+1. `action.yml` line 43: `actions/setup-node@v5` → `actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5`
+2. `reviewer.yml` line 14: `aryan6673/openrabbit@main` → `aryan6673/openrabbit@a05dc7e11748a93a3518553c3de82a98eba9df0f # main`
 
-### Iteration 2
-
-**Fixes applied:** script-injection
-
-**Notes:**
-
-Fixed the script injection vulnerability in `.github/workflows/auto-version.yml` (lines 58-60) by quoting `$TAG` in all three command substitutions: changed `echo $TAG` to `echo "$TAG"` in the MAJOR, MINOR, and PATCH assignments within the 'Bump version (patch)' step. This prevents shell metacharacters in the `CURRENT_VERSION` env value from being interpreted by the shell.
+SHAs were resolved using lookup_action_sha against the live GitHub API.
 
