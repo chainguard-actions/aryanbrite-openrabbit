@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: OpenRabbit
-        uses: aryan6673/openrabbit@d5f8e12f8f60a9bf125f69d81c4f59cf0bfdbc51 # main
+        uses: aryan6673/openrabbit@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           llm_provider: openrouter
