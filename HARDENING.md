@@ -16,45 +16,27 @@ Action **aryanbrite--openrabbit/v0.7.6** was hardened automatically. 2 finding(s
 
 ### unpinned-uses (severity: high)
 
-Multiple `uses:` references pin to mutable tags or branch names instead of immutable 40-character commit SHAs, making the action vulnerable to supply-chain attacks if the referenced tag or branch is moved or overwritten.
-
-Failing references:
-- action.yml: `actions/setup-node@v5`
-- .github/workflows/auto-version.yml: `actions/checkout@v5`, `softprops/action-gh-release@v3`
-- .github/workflows/pr-review.yml: `aryan6673/openrabbit@main`
-- reviewer.yml: `aryan6673/openrabbit@main`
+action.yml references 'actions/setup-node@v5' using a mutable version tag instead of a full 40-character commit SHA. This means the action could be silently updated to a different (potentially malicious) version without any change to this file.
 
 Locations:
 
-- `action.yml:36`
-- `.github/workflows/auto-version.yml:19`
-- `.github/workflows/auto-version.yml:62`
-- `.github/workflows/pr-review.yml:13`
-- `reviewer.yml:13`
+- `action.yml:38`
 
-### script-injection (severity: high)
+### unpinned-uses (severity: high)
 
-Direct `${{ ... }}` expression interpolation inside `run:` shell command strings (rule a). GitHub Actions performs YAML template substitution before the shell ever sees the string, so any special characters in the value are interpreted by the shell.
-
-1. "Bump version (patch)" step (line 47): `TAG=${{ env.CURRENT_VERSION }}` — the `env.CURRENT_VERSION` value (derived from git tag output) is interpolated directly into the shell command. If a tag name contains shell metacharacters, it will be executed.
-
-2. "Update version badge in README" step (lines 70, 71, 79, 80): `${{ env.NEW_VERSION }}` is interpolated directly into shell strings used in `BADGE_URL=`, `grep -q`, `git commit -m`, and `git push origin HEAD:${{ github.ref_name }}`. The `github.ref_name` context is attacker-influenced (branch/tag name) and is interpolated directly into a shell command.
+reviewer.yml references 'aryan6673/openrabbit@main' using a mutable branch name instead of a full 40-character commit SHA. Using a branch ref means any future commit to that branch is automatically picked up, making the workflow vulnerable to supply-chain attacks.
 
 Locations:
 
-- `.github/workflows/auto-version.yml:47`
-- `.github/workflows/auto-version.yml:70`
-- `.github/workflows/auto-version.yml:71`
-- `.github/workflows/auto-version.yml:79`
-- `.github/workflows/auto-version.yml:80`
+- `reviewer.yml:14`
 
 ## Iteration Notes
 
 ### Iteration 1
 
-**Fixes applied:** unpinned-uses, script-injection
+**Fixes applied:** unpinned-uses
 
 **Notes:**
 
-Fixed all 5 unpinned action references by pinning to full 40-character commit SHAs (actions/setup-node@v5→a0853c24..., actions/checkout@v5→fbc6f399..., softprops/action-gh-release@v3→3d0d9888..., aryan6673/openrabbit@main→d5f8e12f... in both pr-review.yml and reviewer.yml). Fixed script injection in auto-version.yml by moving ${{ env.CURRENT_VERSION }} into an env: block in the 'Bump version' step, and moving ${{ env.NEW_VERSION }} and ${{ github.ref_name }} into env: blocks in the 'Update version badge in README' step, replacing all inline ${{ }} expressions in run: shell strings with plain environment variable references.
+Pinned two mutable action references to full commit SHAs: (1) actions/setup-node@v5 → @a0853c24544627f65ddf259abe73b1d18a591444 # v5 in action.yml line 38; (2) aryan6673/openrabbit@main → @a05dc7e11748a93a3518553c3de82a98eba9df0f # main in reviewer.yml line 14. Original tags preserved as comments for readability.
 

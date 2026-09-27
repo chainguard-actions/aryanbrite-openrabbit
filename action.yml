@@ -56,7 +56,7 @@ runs:
           -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
           "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
     - name: Setup Node
-      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+      uses: chainguard-actions/actions-setup-node@09eef6d0a009e3b584fd17d0143592255d14fe94 # v5
       with:
         node-version: '20'
     - name: Install dependencies
