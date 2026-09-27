@@ -11,9 +11,9 @@ jobs:
         continue-on-error: true
         with:
           github_token: ${{ github.token }}
-          llm_api_key: test-api-key-placeholder
           llm_provider: openrouter
           llm_api_url: https://openrouter.ai/api/v1
+          llm_api_key: test-api-key-placeholder
           llm_model: openrouter/free
           review_mode: summary
           tone_mode: balanced
@@ -27,7 +27,7 @@ jobs:
           if [ "$OUTCOME" = "success" ]; then
             echo "PASS: action succeeded"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected — sentinel repo has no real PR to review)"
+            echo "PASS: action failed gracefully (expected — no real PR context or valid API key under workflow_dispatch)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
