@@ -16,19 +16,11 @@ Action **aryanbrite--openrabbit/v0.8.4** was hardened automatically. 1 finding(s
 
 ### unpinned-uses (severity: high)
 
-Two `uses:` references are pinned to mutable tags/branches rather than immutable 40-character commit SHAs, making the action vulnerable to supply-chain attacks if the referenced tag or branch is moved or overwritten.
-
-1. `action.yml`: `uses: actions/setup-node@v5` — `@v5` is a mutable tag.
-2. `reviewer.yml`: `uses: aryan6673/openrabbit@main` — `@main` is a mutable branch.
-
-These should be pinned to full SHA digests, e.g.:
-- `uses: actions/setup-node@1d0ff469b12f8a2e8a3c6e5f7d9b2c4a6e8f0d2c # v5`
-- `uses: aryan6673/openrabbit@<full-40-char-sha> # main`
+action.yml references `actions/setup-node@v5` using a mutable version tag instead of a pinned 40-character commit SHA. This means the action could be silently updated to a different (potentially malicious) version without any change to the workflow file, creating a supply-chain risk.
 
 Locations:
 
-- `action.yml:36`
-- `reviewer.yml:14`
+- `action.yml:40`
 
 ## Iteration Notes
 
@@ -38,9 +30,5 @@ Locations:
 
 **Notes:**
 
-Pinned two mutable `uses:` references to full 40-character commit SHAs:
-1. `action.yml` line 36: `actions/setup-node@v5` → `actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5`
-2. `reviewer.yml` line 14: `aryan6673/openrabbit@main` → `aryan6673/openrabbit@a05dc7e11748a93a3518553c3de82a98eba9df0f # main`
-
-Original tags/branches are preserved as inline comments for readability.
+Pinned `actions/setup-node@v5` to its full commit SHA `a0853c24544627f65ddf259abe73b1d18a591444` in hardened/action/action.yml (line 40). The original tag is preserved as a `# v5` comment for readability.
 
