@@ -16,11 +16,11 @@ Action **aryanbrite--openrabbit/v0.7.3** was hardened automatically. 1 finding(s
 
 ### unpinned-uses (severity: high)
 
-The composite action in action.yml references `actions/setup-node@v5`, which is a mutable tag reference rather than a pinned 40-character commit SHA. If the upstream action is compromised or the tag is moved, the action will silently execute different code. This is a supply-chain risk. The reference should be pinned to a full SHA, e.g. `actions/setup-node@1d0ff469b12f2e6c5a1aa5f8c2d9b8e7f6a5b4c3 # v5`.
+The composite action step in action.yml uses `actions/setup-node@v5`, which is pinned to a mutable version tag (`v5`) rather than a full 40-character commit SHA. This means the action could silently change if the tag is moved, enabling a supply-chain attack. It should be pinned to a specific commit SHA, e.g. `actions/setup-node@1d0ff469b4a3d9a8e4b8d4e4e4e4e4e4e4e4e4e4 # v5`.
 
 Locations:
 
-- `action.yml:36`
+- `action.yml:37`
 
 ## Iteration Notes
 
@@ -30,5 +30,5 @@ Locations:
 
 **Notes:**
 
-Pinned `actions/setup-node@v5` to its full commit SHA `a0853c24544627f65ddf259abe73b1d18a591444` in hardened/action/action.yml (line 36). The original tag is preserved as a comment for readability.
+Pinned actions/setup-node@v5 to its full commit SHA (a0853c24544627f65ddf259abe73b1d18a591444) in hardened/action/action.yml, preserving the original tag as a comment for readability.
 
