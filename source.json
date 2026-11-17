@@ -4,9 +4,13 @@
   "version": "v0.9.1",
   "commit_sha": "4534913d4062eaedb8da178d3123b7b5c2e4dab4",
   "url": "https://github.com/aryanbrite/openrabbit",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
   "harden_agent_version": "2",
-  "dependency_fingerprint": "sha256:70fb97a932ceef51c8fc6f3bd2df3b623f04912166366d7774c645fc57826a78"
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/aryanbrite/openrabbit/v0.9.1/sha256-f6e00d7b8d5d8c3ba7e98b103af2ca296718a3c3fd6368a9102c3797427d4561.tar.gz",
+    "sha256": "f6e00d7b8d5d8c3ba7e98b103af2ca296718a3c3fd6368a9102c3797427d4561",
+    "size_bytes": 17810
+  }
 }
